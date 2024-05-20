@@ -1,0 +1,115 @@
+﻿@page "/Editar-Ave/{nombre}"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager NavigationManager
+
+<h3>Editar Ave</h3>
+
+<EditForm Model="@ave" OnValidSubmit="Guardar">
+    <div class="form-group">
+        <label for="Nombre">Nombre</label>
+        <InputText id="Nombre" @bind-Value="ave.Nombre" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="Especie">Especie</label>
+        <InputText id="Especie" @bind-Value="ave.Especie" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="Alimentacion">Tipo de Alimentación</label>
+        <InputText id="Alimentacion" @bind-Value="ave.Alimentacion" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="TiempoVida">Tiempo máximo de vida (años)</label>
+        <InputText id="TiempoVida" @bind-Value="ave.TiempoVida" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="Vuela">¿Vuela?</label>
+        <InputCheckbox id="Vuela" @bind-Value="ave.Vuela" class="form-check-input" />
+    </div>
+    <div class="form-group">
+        <label for="PeriodoEncubacion">Periodo de Incubación</label>
+        <InputText id="PeriodoEncubacion" @bind-Value="ave.PeriodoEncubacion" class="form-control" />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</EditForm>
+
+@if (aves != null && aves.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Especie</th>
+                <th>Tipo de Alimentación</th>
+                <th>Tiempo de Vida</th>
+                <th>Vuela</th>
+                <th>Periodo de Incubación</th>
+                <th>Editar</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ave in aves)
+            {
+                <tr>
+                    <td>@ave.Nombre</td>
+                    <td>@ave.Especie</td>
+                    <td>@ave.Alimentacion</td>
+                    <td>@ave.TiempoVida</td>
+                    <td>@ave.Vuela ? "Sí" : "No"</td>
+                    <td>@ave.PeriodoEncubacion</td>
+                    <td>
+                        <button class="btn btn-warning" @onclick="@(() => NavigationManager.NavigateTo($"/Editar-Ave/{ave.Nombre}"))">Editar</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="@(() => BorrarAve(ave.Nombre))">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public string nombre { get; set; }
+    private Aves ave = new Aves();
+    private List<Aves> aves = new List<Aves>();
+
+    protected async Task Guardar()
+    {
+        var aveExistente = aves.FirstOrDefault(c => c.Nombre == nombre);
+        if (aveExistente != null)
+        {
+            aveExistente.Nombre = ave.Nombre;
+            aveExistente.Especie = ave.Especie;
+            aveExistente.Alimentacion = ave.Alimentacion;
+            aveExistente.TiempoVida = ave.TiempoVida;
+            aveExistente.Vuela = ave.Vuela;
+            aveExistente.PeriodoEncubacion = ave.PeriodoEncubacion;
+        }
+
+        await localStorage.SetItemAsync("aves", aves);
+        NavigationManager.NavigateTo("/Ingresar-Ave");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        aves = await localStorage.GetItemAsync<List<Aves>>("aves");
+        if (aves == null)
+            aves = new List<Aves>();
+
+        ave = aves.FirstOrDefault(c => c.Nombre == nombre);
+    }
+
+    private async Task BorrarAve(string nombre)
+    {
+        var aveAEliminar = aves.FirstOrDefault(c => c.Nombre == nombre);
+        if (aveAEliminar != null)
+        {
+            aves.Remove(aveAEliminar);
+            await localStorage.SetItemAsync("aves", aves);
+        }
+    }
+}
